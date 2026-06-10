@@ -6,6 +6,7 @@
 <meta name="color-scheme" content="light">
 <title>spDokumenti – Dokumenti za s.p.</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; color-scheme: light; }
@@ -659,43 +660,43 @@ footer {
       <div class="doc-desc">Z DDV ali brez. Samodejni izračun. Takoj PDF.</div>
       <span class="doc-badge badge-free">Brezplačno</span>
     </a>
-    <a href="pogodba-o-delu.html" class="doc-card">
+    <a href="javascript:void(0)" onclick="checkPro('pogodba-o-delu.html')" class="doc-card">
       <div class="doc-emoji">📋</div>
       <div class="doc-name">Pogodba o delu</div>
       <div class="doc-desc">Za enkratne storitve. Obseg, rok, plačilo.</div>
       <span class="doc-badge badge-pro">Pro</span>
     </a>
-    <a href="avtorska-pogodba.html" class="doc-card">
+    <a href="javascript:void(0)" onclick="checkPro('avtorska-pogodba.html')" class="doc-card">
       <div class="doc-emoji">✍️</div>
       <div class="doc-name">Avtorska pogodba</div>
       <div class="doc-desc">Za kreativce in programerje. Zaščiti tvoje pravice.</div>
       <span class="doc-badge badge-pro">Pro</span>
     </a>
-    <a href="ponudba.html" class="doc-card">
+    <a href="javascript:void(0)" onclick="checkPro('ponudba.html')" class="doc-card">
       <div class="doc-emoji">📊</div>
       <div class="doc-name">Ponudba / Predračun</div>
       <div class="doc-desc">Profesionalna ponudba pred začetkom dela.</div>
       <span class="doc-badge badge-pro">Pro</span>
     </a>
-    <a href="najemna-pogodba.html" class="doc-card">
+    <a href="javascript:void(0)" onclick="checkPro('najemna-pogodba.html')" class="doc-card">
       <div class="doc-emoji">🏠</div>
       <div class="doc-name">Najemna pogodba</div>
       <div class="doc-desc">Za najem nepremičnine ali opreme.</div>
       <span class="doc-badge badge-pro">Pro</span>
     </a>
-    <a href="potni-nalog.html" class="doc-card">
+    <a href="javascript:void(0)" onclick="checkPro('potni-nalog.html')" class="doc-card">
       <div class="doc-emoji">🚗</div>
       <div class="doc-name">Potni nalog</div>
       <div class="doc-desc">Samodejni izračun kilometrine.</div>
       <span class="doc-badge badge-pro">Pro</span>
     </a>
-    <a href="izjava-o-delu.html" class="doc-card">
+    <a href="javascript:void(0)" onclick="checkPro('izjava-o-delu.html')" class="doc-card">
       <div class="doc-emoji">✅</div>
       <div class="doc-name">Izjava o delu</div>
       <div class="doc-desc">Potrditev opravljene storitve.</div>
       <span class="doc-badge badge-pro">Pro</span>
     </a>
-    <a href="nda.html" class="doc-card">
+    <a href="javascript:void(0)" onclick="checkPro('nda.html')" class="doc-card">
       <div class="doc-emoji">🔒</div>
       <div class="doc-name">NDA – Zaupnost</div>
       <div class="doc-desc">Zaščiti poslovne skrivnosti.</div>
@@ -854,6 +855,22 @@ function saveEmail() {
   window.open('https://buy.stripe.com/fZu8wO2ZBgFr5jF0Wc6Ri00', '_blank');
 }
 
+function checkPro(url) {
+  const saved = localStorage.getItem('pro_access');
+  if (saved === 'PRO2024') {
+    window.location.href = url;
+    return;
+  }
+  const pwd = prompt('Vnesite Pro geslo za dostop do tega dokumenta:\n\nŠe nimate gesla? Kupite Pro plan!');
+  if (pwd === 'PRO2024') {
+    localStorage.setItem('pro_access', 'PRO2024');
+    window.location.href = url;
+  } else if (pwd !== null) {
+    alert('Napačno geslo. Kupite Pro plan za dostop do vseh dokumentov.');
+    document.getElementById('upgrade-modal').classList.add('open');
+  }
+}
+
 function updateCounter() {
   const used = parseInt(localStorage.getItem('fakture_used') || '0');
   const rem = Math.max(0, 3 - used);
@@ -863,6 +880,40 @@ function updateCounter() {
   });
 }
 updateCounter();
+
+// Supabase Auth
+const SUPABASE_URL = 'https://jgogoroloaykrmtnyxgh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CxbeAKCs1dFKAmqOc6uCwA_NrZuq-rP';
+const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function checkAuth() {
+  const { data: { session } } = await _supabase.auth.getSession();
+  
+  if (session) {
+    // Prijavljen
+    document.getElementById('nav-login-btn').style.display = 'none';
+    document.getElementById('nav-logout-btn').style.display = 'block';
+    document.getElementById('nav-start-btn').style.display = 'block';
+    
+    // Preveri Pro status
+    const { data: profile } = await _supabase
+      .from('profiles')
+      .select('is_pro')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (profile && profile.is_pro) {
+      document.getElementById('nav-pro-badge').style.display = 'inline-block';
+    }
+  }
+}
+
+async function logout() {
+  await _supabase.auth.signOut();
+  window.location.reload();
+}
+
+checkAuth();
 </script>
 </body>
 </html>
